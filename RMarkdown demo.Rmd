@@ -1,0 +1,215 @@
+---
+title: "Exploratory daya analysis"
+author: "Dominic Henry"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    toc: yes
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# The basics
+
+**Some bold text**  
+
+*Some italic text*  
+
+***Some bold and italic text***
+
+superscript^2^
+
+~~some strikethrough text~~
+
+## Basics header 2
+
+Two spaces to start a new paragraph  
+
+### Basics header 3
+
+Or else
+it will interpret the
+text as a single
+line
+
+#### Basics header 4
+
+Insert a horizontal rule  
+
+***
+
+# Code highlighting
+
+The tidyverse has several useful functions such as `dplyr::filter(dataframe, x < 10)`
+
+# Inline code
+
+The sum of 2 and 2 is `r 2+2` and today's date is **`r Sys.Date()`**.
+
+# Hyperlinks
+
+Packages for templates  are [`rmdformats`](https://github.com/juba/rmdformats) and [`prettydoc`](https://github.com/yixuan/prettydoc).
+
+# Images 
+
+Don't quote directory as string!
+
+![*Some useful image caption here*](data/rmd_hex_small.png)
+
+
+# Setup code chunk defaults
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(
+  eval=TRUE,     # Evaluate the code and include its results?
+  echo=TRUE,     # Display code along with its results?
+  warning=FALSE, # Display warnings?
+  message=TRUE,  # Messages?
+  error=FALSE,   # Display errors?
+  fig.width=7,   # Unit = inches
+  fig.width=7    # Unit = inches
+  )
+```
+
+# Example using bird data
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+```{r }
+# counts <- readr::read_csv(here("data","bird_counts.csv"))
+counts <- readr::read_csv("data/bird_counts.csv")
+```
+
+Preview the tibble
+
+```{r, echo=FALSE}
+counts
+```
+
+Using the `kable` function to render neat tables
+
+```{r, echo=TRUE, results='asis'}
+knitr::kable(head(counts))
+```
+
+
+```{r, echo=FALSE}
+# Tidy column names 
+counts <- dplyr::rename_all(counts, tolower)
+```
+
+Re-order variables and check names
+
+```{r}
+counts <- dplyr::select(counts, site,protection,year,month,abundance,richness,
+                        everything())
+names(counts)
+```
+
+Remove shoreline and aquatic variables and recheck names
+
+```{r}
+counts <- dplyr::select(counts, -matches("sl_|aq_"),-humidity)
+names(counts)
+```
+
+# Data wrangling
+
+```{r, echo = TRUE}
+counts <- counts %>% 
+  separate(site, c("mission","cluster","site"), sep = "_") %>% 
+  arrange(mission, cluster, site) %>% 
+  mutate(year = year + 10,air_temp = (air_temp - 32)/1.8) %>% 
+  filter(!is.na(ph))
+```
+
+```{r, echo = FALSE}
+knitr::kable(counts %>% 
+               group_by(cluster) %>% 
+               summarise(Mean = mean(abundance),SD = sd(abundance)),
+  digits = 2,
+  caption = "A summary table"
+  )
+```
+
+
+# Species richness plot
+
+```{r, echo=FALSE}
+# Group, summarise and plot -----------------------------------------------
+counts %>% 
+  mutate(year = as.factor(year)) %>% 
+  group_by(cluster,year) %>% 
+  summarise(mean_rich = mean(richness),sd_rich = sd(richness)) %>% 
+  ggplot(aes(x = cluster, y = mean_rich, fill = year))+
+  geom_bar(stat = "identity",position = position_dodge())+
+  geom_errorbar(aes(ymin=mean_rich, ymax=mean_rich + sd_rich),
+                width=.2,position=position_dodge(.9))
+
+```
+
+
+## How did we make that plot?
+
+```{r, eval=FALSE}
+# Group, summarise and plot -----------------------------------------------
+counts %>% 
+  mutate(year = as.factor(year)) %>% 
+  group_by(cluster,year) %>% 
+  summarise(mean_rich = mean(richness),sd_rich = sd(richness)) %>% 
+  ggplot(aes(x = cluster, y = mean_rich, fill = year))+
+  geom_bar(stat = "identity",position = position_dodge())+
+  geom_errorbar(aes(ymin=mean_rich, ymax=mean_rich + sd_rich),
+                width=.2,position=position_dodge(.9))
+
+```
+
+## Small plot 1
+
+```{r, echo=FALSE, fig.height=3, fig.height=3}
+counts %>% 
+  mutate(year = as.factor(year)) %>% 
+  group_by(cluster,year) %>% 
+  summarise(mean_rich = mean(richness),sd_rich = sd(richness)) %>% 
+  ggplot(aes(x = cluster, y = mean_rich, fill = year))+
+  geom_bar(stat = "identity",position = position_dodge())+
+  geom_errorbar(aes(ymin=mean_rich, ymax=mean_rich + sd_rich),
+                width=.2,position=position_dodge(.9))
+
+```
+
+# Equations
+
+In line equations $Y = X\beta + \epsilon$
+
+Centered equations $$Y_{ij} = \beta1_{ij}*temp + \beta2_{ij}*elevation + \epsilon_i$$
+
+[Common statistics equations](https://gist.github.com/derekmcloughlin/896da22518ef2f3d81b0) 
+
+
+# Shorcuts
+
+These are just a few examples^[There are lots more]  
+
+
+`CTRL + SHIFT + c` to commment out code  
+`ALT + SHIFT + i` to insert code chunk  
+`CTRL + SHIFT + k` to knit Rmd file  
+
+# Remedy package
+
+`{remedy}` provides addins to facilitate writing in markdown with RStudio.
+
+```{r echo=FALSE, out.width='50%'}
+
+knitr::include_graphics('data/thinkr-hex-remedy.png')
+
+```
+
+
