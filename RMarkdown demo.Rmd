@@ -1,5 +1,5 @@
 ---
-title: "Exploratory daya analysis"
+title: "Exploratory data analysis"
 author: "Dominic Henry"
 date: "`r Sys.Date()`"
 output:
